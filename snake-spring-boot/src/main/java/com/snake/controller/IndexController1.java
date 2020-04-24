@@ -2,6 +2,7 @@ package com.snake.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -13,15 +14,16 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class IndexController1 {
 	@ResponseBody
 	@RequestMapping("index1")
-	public String index1(){
+	public String index1() {
 		System.out.println("--------index1-----");
 		return "index1";
 	}
 
 	@ResponseBody
 	@RequestMapping("index11")
-	public String index11(){
+	public String index11(@RequestParam("a") String a, @RequestParam("b") String b) {
+		System.out.println(a + "  " + b);
 		System.out.println("--------index11-----");
-		return "index11";
+		return "return index11";
 	}
 }
