@@ -265,9 +265,13 @@ public class SpringApplication {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 判断项目是什么类型的, REACTIVE / NONE / SERVLET
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
+		// 找到所有的 spring.factories配置文件中 ApplicationContextInitializer.class
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+		// 找到所有的 spring.factories配置文件中 ApplicationListener.class
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+		// 推断main方法在哪个类 很骚( 通过抛出异常,然后得到main方法的类)
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
@@ -294,21 +298,40 @@ public class SpringApplication {
 	 */
 	public ConfigurableApplicationContext run(String... args) {
 		StopWatch stopWatch = new StopWatch();
-		stopWatch.start();
+		stopWatch.start(); // 记录时间的用的stopWatch
 		ConfigurableApplicationContext context = null;
 		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
+		// 配置一个系统属性不重要
 		configureHeadlessProperty();
+		/**
+		 * 这里需要注意的是SpringApplicationRunListeners不等于EventPublishingRunListeners
+		 * 因为EventPublishingRunListeners是 EventPublishingRunListener 的集合
+		 * 注意 s  s  s  s
+		 * List<EventPublishingRunListener> listeners
+		 */
+		// 这里可以根据配置文件信息得到一个事件发布的监听器  EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		// 监听器实现该 GenericApplicationListener 接口 1. 是否支持 事件类型, 2. 是否支持 事件源类型 3. 设置顺序
+		// 现在是启动中事件
 		listeners.starting();
 		try {
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			// 初始化环境,非常复杂
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
+			// 打印banner
 			Banner printedBanner = printBanner(environment);
+			// 初始化spring容器 相当于 new ApplicationContext();
+			// 不同的项目类型, 创建不同的 ApplicationContext();
 			context = createApplicationContext();
+			// 记录错误日志
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
+			// 准备工作
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			// 相当于spring的构造函数中 refresh()
+			// 其中不同项目类型,会执行自己的 refresh(),但是最终会执行spring.refresh();
+			// refresh()方法会执行 子类的 onRefresh() 不同的类型 创建不同类型的容器
 			refreshContext(context);
 			afterRefresh(context, applicationArguments);
 			stopWatch.stop();
@@ -417,6 +440,7 @@ public class SpringApplication {
 	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
+		// 加载所有的 META-INF/spring.factories配置文件,将值去重添加的list中
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
 		AnnotationAwareOrderComparator.sort(instances);

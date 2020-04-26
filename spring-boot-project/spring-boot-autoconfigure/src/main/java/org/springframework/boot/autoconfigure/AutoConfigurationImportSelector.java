@@ -95,6 +95,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		}
 		AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader
 				.loadMetadata(this.beanClassLoader);
+		// 得到自动配置实体集合
 		AutoConfigurationEntry autoConfigurationEntry = getAutoConfigurationEntry(autoConfigurationMetadata,
 				annotationMetadata);
 		return StringUtils.toStringArray(autoConfigurationEntry.getConfigurations());
@@ -113,10 +114,15 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			return EMPTY_ENTRY;
 		}
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		// 获取所有候选的配置的类
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+		// 去除重复
 		configurations = removeDuplicates(configurations);
+		// 根据注解找到需要去除的类
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		// 检查排除的类(判断jvm中有没加载过这个类)
 		checkExcludedClasses(configurations, exclusions);
+		// 移出这些通过注解排除的类
 		configurations.removeAll(exclusions);
 		configurations = filter(configurations, autoConfigurationMetadata);
 		fireAutoConfigurationImportEvents(configurations, exclusions);
