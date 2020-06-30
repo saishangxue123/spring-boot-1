@@ -93,6 +93,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		if (!isEnabled(annotationMetadata)) {
 			return NO_IMPORTS;
 		}
+		// 加载路径为 META-INF/spring-autoconfigure-metadata.properties文件,设置condition，来控制是否加载类。
 		AutoConfigurationMetadata autoConfigurationMetadata = AutoConfigurationMetadataLoader
 				.loadMetadata(this.beanClassLoader);
 		// 得到自动配置实体集合
@@ -124,6 +125,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		checkExcludedClasses(configurations, exclusions);
 		// 移出这些通过注解排除的类
 		configurations.removeAll(exclusions);
+		// 通过前面的condition来控制是否加载类
 		configurations = filter(configurations, autoConfigurationMetadata);
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
